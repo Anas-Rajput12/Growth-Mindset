@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 import io
-
 # Set Streamlit Page Config
 st.set_page_config(page_title="Universal Data Sweeper", page_icon="🧹")
 
