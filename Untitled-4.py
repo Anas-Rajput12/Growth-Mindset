@@ -2,15 +2,14 @@ import streamlit as st
 import pandas as pd
 import json
 import io
-from docx import Document
 from fpdf import FPDF  # PDF generation library
 
 st.set_page_config(page_title="Universal Data Sweeper", page_icon="🧹")
 
 st.title("🧹 Universal Data Sweeper")
-st.write("Upload a CSV, Excel, TXT, JSON, or Word file to clean it.")
+st.write("Upload a CSV, Excel, TXT, or JSON file to clean it.")
 
-uploaded_file = st.file_uploader("Upload File", type=["csv", "xlsx", "txt", "json", "docx"])
+uploaded_file = st.file_uploader("Upload File", type=["csv", "xlsx", "txt", "json"])
 
 # Function to clean text by removing special characters
 def clean_text(text):
@@ -39,10 +38,6 @@ if uploaded_file:
         elif file_type == "json":
             json_data = json.load(uploaded_file)
             df = pd.DataFrame(json_data)
-        elif file_type == "docx":
-            doc = Document(uploaded_file)
-            text_data = [para.text for para in doc.paragraphs if para.text.strip()]
-            df = pd.DataFrame(text_data, columns=["Text"])
 
         # Show original data
         st.subheader("📊 Original Data Preview")
@@ -69,7 +64,7 @@ if uploaded_file:
             json_str = json.dumps(cleaned_df.to_dict(orient="records"), indent=4)
             output.write(json_str.encode("utf-8"))
             mime_type = "application/json"
-        elif file_type in ["txt", "docx"]:
+        elif file_type == "txt":
             output.write("\n".join(cleaned_df["Text"]).encode("utf-8"))
             mime_type = "text/plain"
             file_name = "cleaned_data.txt"
@@ -90,7 +85,7 @@ if uploaded_file:
                 row_data = " | ".join(str(value) for value in row)
                 pdf.cell(200, 10, txt=row_data, ln=True, align='L')
 
-            # ✅ Corrected: Writing PDF to BytesIO using "S" mode
+            # ✅ Writing PDF to BytesIO using "S" mode
             return io.BytesIO(pdf.output(dest="S").encode("latin1"))
 
         # Generate PDF
