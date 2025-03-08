@@ -17,12 +17,14 @@ uploaded_file = st.file_uploader("📂 Upload Your File", type=["csv", "xlsx", "
 
 # Data Cleaning Function
 def clean_text(text):
-    return ''.join(e for e in text if e.isalnum() or e.isspace()).strip()  # Remove special characters & trim
+    """Removes special characters & trims text"""
+    return ''.join(e for e in text if e.isalnum() or e.isspace()).strip()
 
 def clean_data(df):
-    df.drop_duplicates(inplace=True)  # Remove Duplicates
-    df.dropna(inplace=True)  # Remove Empty Rows
-    df = df.applymap(lambda x: clean_text(str(x)) if isinstance(x, str) else x)  # Clean text
+    """Cleans data by removing duplicates, empty rows, and special characters"""
+    df.drop_duplicates(inplace=True)
+    df.dropna(inplace=True)
+    df = df.applymap(lambda x: clean_text(str(x)) if isinstance(x, str) else x)
     return df
 
 if uploaded_file:
@@ -49,6 +51,7 @@ if uploaded_file:
             text_data = "\n".join([para.text for para in doc.paragraphs])
             df = pd.DataFrame(text_data.split("\n"), columns=["Text"])
 
+        # Display Original Data
         st.subheader("📊 Original Data Preview")
         st.dataframe(df.head())
 
@@ -57,15 +60,24 @@ if uploaded_file:
         st.subheader("✅ Cleaned Data Preview")
         st.dataframe(cleaned_df.head())
 
-        # Download Cleaned Data
+        # Prepare Cleaned File for Download
         output = io.BytesIO()
         if file_type in ["csv", "json", "xlsx", "txt"]:
-            cleaned_df.to_csv(output, index=False) if file_type == "csv" else None
-            cleaned_df.to_excel(output, index=False, engine="openpyxl") if file_type == "xlsx" else None
-            cleaned_df.to_json(output, orient="records", indent=4) if file_type == "json" else None
-            output.write("\n".join(cleaned_df["Text"]).encode()) if file_type == "txt" else None
-            mime_type = "text/csv" if file_type == "csv" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if file_type == "xlsx" else "application/json" if file_type == "json" else "text/plain"
+            if file_type == "csv":
+                cleaned_df.to_csv(output, index=False)
+                mime_type = "text/csv"
+            elif file_type == "xlsx":
+                cleaned_df.to_excel(output, index=False, engine="openpyxl")
+                mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            elif file_type == "json":
+                cleaned_df.to_json(output, orient="records", indent=4)
+                mime_type = "application/json"
+            elif file_type == "txt":
+                output.write("\n".join(cleaned_df["Text"]).encode())
+                mime_type = "text/plain"
+
             file_name = f"cleaned_data.{file_type}"
+        
         elif file_type in ["pdf", "docx"]:
             cleaned_text = "\n".join(cleaned_df["Text"])
             output.write(cleaned_text.encode())
@@ -74,6 +86,7 @@ if uploaded_file:
 
         output.seek(0)
 
+        # Download Button
         st.download_button(
             label="⬇️ Download Cleaned File",
             data=output,
